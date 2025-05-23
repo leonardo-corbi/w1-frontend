@@ -84,7 +84,7 @@ export function HeroSection() {
               variants={itemVariants}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
-              <Link href="/dashboard/patrimonio">
+              <Link href="/dashboard">
                 <Button
                   size="lg"
                   className="bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white border-0 transition-all duration-300 transform hover:scale-105"
