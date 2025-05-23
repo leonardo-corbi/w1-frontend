@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authAPI, CustomUser } from "@/lib/api";
+import { authAPI } from "@/lib/api";
+import { CustomUser } from "@/types/CustomUser";
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<CustomUser | null>(null);
