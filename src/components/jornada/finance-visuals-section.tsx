@@ -11,9 +11,6 @@ import {
 } from "lucide-react"
 import { 
   ChartContainer, 
-  ChartXAxis,
-  ChartYAxis,
-  ChartGrid,
   ChartTooltip,
   ChartTooltipContent,
   ChartLegend,
