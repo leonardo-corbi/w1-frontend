@@ -89,6 +89,14 @@ export function Navigation() {
     fetchUserProfile();
   }, []);
 
+  const handleSubmit = async () => {
+    try {
+      const logout = await authAPI.logout();
+    } catch (err) {
+      console.error("Erro ao fazer logout:", err);
+    }
+  };
+
   // Define navItems, conditionally including Admin tab
   const navItems = [
     {
@@ -401,6 +409,7 @@ export function Navigation() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-gray-300 hover:text-white hover:bg-[#1A2A3A]"
+                    onClick={handleSubmit}
                   >
                     <LogOut className="h-5 w-5" />
                   </Button>
