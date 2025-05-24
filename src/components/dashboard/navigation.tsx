@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation"; // Added useRouter
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -73,6 +73,7 @@ export function Navigation() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter(); // Added for navigation
   const [user, setUser] = useState<CustomUser | null>(null);
 
   // Fetch user profile to check is_staff
@@ -89,11 +90,14 @@ export function Navigation() {
     fetchUserProfile();
   }, []);
 
-  const handleSubmit = async () => {
+  const handleLogout = async () => {
     try {
-      const logout = await authAPI.logout();
+      await authAPI.logout(); // Ensure logout API call is made
+      setUser(null); // Clear user state
+      router.push("/login"); // Redirect to login page
     } catch (err) {
       console.error("Erro ao fazer logout:", err);
+      alert("Falha ao fazer logout. Tente novamente.");
     }
   };
 
@@ -246,34 +250,48 @@ export function Navigation() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-gray-300 hover:text-white hover:bg-[#1A2A3A]"
+                    onClick={handleLogout} // Updated to use handleLogout
+                    aria-label="Fazer logout"
                   >
                     <LogOut className="h-5 w-5" />
                   </Button>
                 </div>
               </>
             ) : (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-gray-300 hover:text-white hover:bg-[#1A2A3A]"
-                  >
-                    <Settings className="h-5 w-5" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Modo de Acessibilidade</DialogTitle>
-                  </DialogHeader>
-                  <AccessibilityControls />
-                  <DialogClose asChild>
-                    <Button variant="outline" className="mt-4 w-full">
-                      Fechar
+              <>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-gray-300 hover:text-white hover:bg-[#1A2A3A]"
+                      aria-label="Abrir configurações de acessibilidade"
+                    >
+                      <Settings className="h-5 w-5" />
                     </Button>
-                  </DialogClose>
-                </DialogContent>
-              </Dialog>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Modo de Acessibilidade</DialogTitle>
+                    </DialogHeader>
+                    <AccessibilityControls />
+                    <DialogClose asChild>
+                      <Button variant="outline" className="mt-4 w-full">
+                        Fechar
+                      </Button>
+                    </DialogClose>
+                  </DialogContent>
+                </Dialog>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-gray-300 hover:text-white hover:bg-[#1A2A3A]"
+                  onClick={handleLogout} // Added logout button for collapsed state
+                  aria-label="Fazer logout"
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -303,12 +321,37 @@ export function Navigation() {
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-gray-300 hover:text-white hover:bg-[#1A2A3A]"
+                  aria-label="Abrir configurações de acessibilidade"
+                >
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Modo de Acessibilidade</DialogTitle>
+                </DialogHeader>
+                <AccessibilityControls />
+                <DialogClose asChild>
+                  <Button variant="outline" className="mt-4 w-full">
+                    Fechar
+                  </Button>
+                </DialogClose>
+              </DialogContent>
+            </Dialog>
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-gray-300 hover:text-white hover:bg-[#1A2A3A]"
+              onClick={handleLogout} // Updated to use handleLogout
+              aria-label="Fazer logout"
             >
-              <Settings className="h-5 w-5" />
+              <LogOut className="h-5 w-5" />
             </Button>
           </div>
         </div>
@@ -409,7 +452,8 @@ export function Navigation() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-gray-300 hover:text-white hover:bg-[#1A2A3A]"
-                    onClick={handleSubmit}
+                    onClick={handleLogout} // Updated to use handleLogout
+                    aria-label="Fazer logout"
                   >
                     <LogOut className="h-5 w-5" />
                   </Button>
