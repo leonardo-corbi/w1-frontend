@@ -1,22 +1,21 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
   LayoutDashboard,
   BarChart3,
-  Calendar,
-  MessageSquare,
-  Settings,
-  LogOut,
   Activity,
   ChevronLeft,
   ChevronRight,
   X,
   Menu,
+  Settings,
+  LogOut,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,6 +30,8 @@ import {
   DialogHeader,
 } from "@/components/ui/dialog";
 import { AccessibilityControls } from "@/components/ui/accessibility-controls";
+import { authAPI } from "@/lib/api";
+import type { CustomUser } from "@/types/CustomUser";
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -67,29 +68,54 @@ function NavItem({
   );
 }
 
-const navItems = [
-  {
-    icon: <Activity className="h-5 w-5" />,
-    label: "Minha jornada",
-    href: "/dashboard/jornada",
-  },
-  {
-    icon: <LayoutDashboard className="h-5 w-5" />,
-    label: "Dashboard",
-    href: "/dashboard",
-  },
-  {
-    icon: <BarChart3 className="h-5 w-5" />,
-    label: "Simulador",
-    href: "/dashboard/simulador",
-  },
-];
-
 export function Navigation() {
   const isMobile = useMobile();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
+  const [user, setUser] = useState<CustomUser | null>(null);
+
+  // Fetch user profile to check is_staff
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await authAPI.getProfile();
+        setUser(response.data);
+      } catch (err) {
+        console.error("Erro ao carregar perfil do usuário:", err);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  // Define navItems, conditionally including Admin tab
+  const navItems = [
+    {
+      icon: <Activity className="h-5 w-5" />,
+      label: "Minha jornada",
+      href: "/dashboard/jornada",
+    },
+    {
+      icon: <LayoutDashboard className="h-5 w-5" />,
+      label: "Dashboard",
+      href: "/dashboard",
+    },
+    {
+      icon: <BarChart3 className="h-5 w-5" />,
+      label: "Simulador",
+      href: "/dashboard/simulador",
+    },
+    ...(user?.is_staff
+      ? [
+          {
+            icon: <Users className="h-5 w-5" />,
+            label: "Admin",
+            href: "/admin/usuarios",
+          },
+        ]
+      : []),
+  ];
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -154,7 +180,11 @@ export function Navigation() {
                 icon={item.icon}
                 label={item.label}
                 href={item.href}
-                active={pathname === item.href}
+                active={
+                  pathname === item.href ||
+                  (item.href !== "/dashboard/jornada" &&
+                    pathname.startsWith(item.href))
+                }
                 isCollapsed={isCollapsed}
               />
             ))}
@@ -323,9 +353,9 @@ export function Navigation() {
                     href={item.href}
                     active={
                       pathname === item.href ||
-                      (item.href !== "/jornada" &&
+                      (item.href !== "/dashboard/jornada" &&
                         pathname.startsWith(item.href))
-                    } // Highlight for exact or nested routes
+                    }
                     onClick={() => setMobileNavOpen(false)}
                   />
                 ))}

@@ -9,6 +9,28 @@ export function formatDate(date: string) {
   return new Date(date).toLocaleDateString("pt-BR");
 }
 
+export function getPrioridadeVariant(
+  prioridade: "baixa" | "media" | "alta"
+): "default" | "secondary" | "destructive" | "outline" {
+  const variants = {
+    baixa: "secondary",
+    media: "default",
+    alta: "destructive",
+  } as const; // Use 'as const' to make the object a readonly literal type
+  return variants[prioridade] || "default";
+}
+
+export function getStatusVariant(
+  status: "pending" | "processing" | "completed"
+): "default" | "secondary" | "destructive" | "outline" {
+  const variants = {
+    pending: "secondary",
+    processing: "default",
+    completed: "outline",
+  } as const; // Use 'as const' to make the object a readonly literal type
+  return variants[status] || "default";
+}
+
 export function formatCurrency(value: string) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
