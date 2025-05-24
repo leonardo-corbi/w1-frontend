@@ -6,8 +6,9 @@ import { UserFilters } from "@/components/admin/usuarios/user-filter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
-import { userAPI } from "@/lib/api";
+import { authAPI, userAPI } from "@/lib/api";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface User {
   id: string;
@@ -29,6 +30,26 @@ export default function UsuariosPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isStaff, setIsStaff] = useState<boolean | null>(null); // New state for is_staff
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await authAPI.getProfile();
+        setIsStaff(response.data.is_staff); // Set is_staff state
+        if (!response.data.is_staff) {
+          router.push("/dashboard");
+        }
+      } catch (err) {
+        console.error("Erro ao buscar perfil:", err);
+        setIsStaff(false); // Assume not staff on error
+        router.push("/dashboard");
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -67,18 +88,22 @@ export default function UsuariosPage() {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, [searchQuery, filters]);
+    if (isStaff) {
+      fetchUsers();
+    }
+  }, [searchQuery, filters, isStaff]);
 
   useEffect(() => {
-    const handleStatusChange = () => {
-      fetchUsers();
-    };
-    window.addEventListener("userStatusChanged", handleStatusChange);
-    return () => {
-      window.removeEventListener("userStatusChanged", handleStatusChange);
-    };
-  }, []);
+    if (isStaff) {
+      const handleStatusChange = () => {
+        fetchUsers();
+      };
+      window.addEventListener("userStatusChanged", handleStatusChange);
+      return () => {
+        window.removeEventListener("userStatusChanged", handleStatusChange);
+      };
+    }
+  }, [isStaff]);
 
   return (
     <div className="p-6 space-y-6">
