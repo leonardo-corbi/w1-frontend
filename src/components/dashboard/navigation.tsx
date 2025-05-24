@@ -16,6 +16,7 @@ import {
   Settings,
   LogOut,
   Users,
+  NotebookTabs,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -125,6 +126,11 @@ export function Navigation() {
             label: "Admin",
             href: "/admin/usuarios",
           },
+          {
+            icon: <NotebookTabs className="h-5 w-5" />,
+            label: "Analisador",
+            href: "/dashboard/analisador",
+          },
         ]
       : []),
   ];
@@ -192,11 +198,7 @@ export function Navigation() {
                 icon={item.icon}
                 label={item.label}
                 href={item.href}
-                active={
-                  pathname === item.href ||
-                  (item.href !== "/dashboard/jornada" &&
-                    pathname.startsWith(item.href))
-                }
+                active={pathname === item.href}
                 isCollapsed={isCollapsed}
               />
             ))}

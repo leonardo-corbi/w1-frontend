@@ -166,7 +166,7 @@ export default function PredictionForm() {
               <SelectContent>
                 <SelectItem value="Conservador">Conservador</SelectItem>
                 <SelectItem value="Moderado">Moderado</SelectItem>
-                <SelectItem value="Agressivo">Agressivo</SelectItem>
+                <SelectItem value="Arrojado">Agressivo</SelectItem>
               </SelectContent>
             </Select>
           </div>

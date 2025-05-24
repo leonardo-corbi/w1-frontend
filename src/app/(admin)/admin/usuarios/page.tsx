@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { UserTable } from "@/components/admin/usuarios/user-table";
 import { UserFilters } from "@/components/admin/usuarios/user-filter";
 import { Button } from "@/components/ui/button";
@@ -109,9 +110,11 @@ export default function UsuariosPage() {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-w1-dark">Usuários</h1>
-        <Button className="bg-w1-green hover:bg-w1-green-dark text-white">
-          Exportar Dados
-        </Button>
+        <Link href="/dashboard">
+          <Button className="bg-w1-green hover:bg-w1-green-dark text-black border">
+            Voltar
+          </Button>
+        </Link>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">

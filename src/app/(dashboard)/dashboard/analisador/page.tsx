@@ -58,10 +58,6 @@ export default function Home() {
               AI Prediction Dashboard
             </h1>
           </div>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Sistema de previsão inteligente para análise de holding e risco de
-            churn usando Random Forest
-          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
