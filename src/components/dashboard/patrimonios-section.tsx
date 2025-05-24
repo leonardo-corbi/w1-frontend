@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { Patrimonio } from "@/types/Patrimonio";
 import { patrimonioAPI } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -9,6 +9,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -20,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -40,8 +42,25 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Home, Plus } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Home,
+  Plus,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Trash2,
+} from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 
 interface PatrimoniosSectionProps {
   patrimonios: Patrimonio[];
@@ -52,7 +71,12 @@ const patrimonioFormSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
   tipo: z.string().min(1, "Tipo é obrigatório"),
   data_aquisicao: z.string().min(1, "Data de aquisição é obrigatória"),
-  valor: z.coerce.number().min(0, "Valor deve ser maior ou igual a zero"),
+  valor: z.coerce
+    .number({
+      required_error: "Valor é obrigatório",
+      invalid_type_error: "Valor deve ser um número",
+    })
+    .min(0, "Valor deve ser maior ou igual a zero"),
 });
 
 type PatrimonioFormValues = z.infer<typeof patrimonioFormSchema>;
@@ -63,8 +87,9 @@ export function PatrimoniosSection({
 }: PatrimoniosSectionProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [formSuccess, setFormSuccess] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [patrimonioToDelete, setPatrimonioToDelete] =
+    useState<Patrimonio | null>(null);
 
   const form = useForm<PatrimonioFormValues>({
     resolver: zodResolver(patrimonioFormSchema),
@@ -78,21 +103,31 @@ export function PatrimoniosSection({
 
   const onSubmit = async (data: PatrimonioFormValues) => {
     setIsSubmitting(true);
-    setFormError(null);
-    setFormSuccess(null);
-
     try {
       await patrimonioAPI.create(data);
       await fetchPatrimonios();
-      setFormSuccess("Patrimônio adicionado com sucesso!");
-      setTimeout(() => {
-        setIsDialogOpen(false);
-        form.reset();
-        setFormSuccess(null);
-      }, 1500);
+      toast.success("Patrimônio adicionado com sucesso!");
+      setIsDialogOpen(false);
+      form.reset();
     } catch (error) {
       console.error("Erro ao criar patrimônio:", error);
-      setFormError("Ocorreu um erro ao adicionar o patrimônio.");
+      toast.error("Ocorreu um erro ao adicionar o patrimônio.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    setIsSubmitting(true);
+    try {
+      await patrimonioAPI.delete(id);
+      await fetchPatrimonios();
+      toast.success("Patrimônio excluído com sucesso!");
+      setIsDeleteDialogOpen(false);
+      setPatrimonioToDelete(null);
+    } catch (error) {
+      console.error("Erro ao excluir patrimônio:", error);
+      toast.error("Ocorreu um erro ao excluir o patrimônio.");
     } finally {
       setIsSubmitting(false);
     }
@@ -101,7 +136,7 @@ export function PatrimoniosSection({
   // Group patrimonios by type
   const groupedPatrimonios = patrimonios.reduce(
     (acc: { [key: string]: Patrimonio[] }, patrimonio) => {
-      const tipo = patrimonio.tipo || "Sem Tipo";
+      const tipo = patrimonio.tipo || "Outro";
       acc[tipo] = acc[tipo] || [];
       acc[tipo].push(patrimonio);
       return acc;
@@ -116,38 +151,31 @@ export function PatrimoniosSection({
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 md:space-y-8">
+      {/* Section Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-navy-300">Gerencie seus bens e propriedades</p>
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
+            Patrimônios
+          </h1>
+          <p className="text-muted-foreground">
+            Gerencie seus bens e propriedades.
+          </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-navy-600 hover:bg-navy-700 text-white">
+            <Button>
               <Plus className="mr-2 h-4 w-4" />
               Adicionar Patrimônio
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-navy-800 border-navy-700 text-white bg-slate-500">
+          <DialogContent className="sm:max-w-[480px]">
             <DialogHeader>
               <DialogTitle>Novo Patrimônio</DialogTitle>
-              <DialogDescription className="text-navy-300">
+              <DialogDescription>
                 Adicione um novo patrimônio ao seu portfólio.
               </DialogDescription>
             </DialogHeader>
-
-            {formSuccess && (
-              <Alert className="bg-green-900 border-green-800 text-green-100">
-                <AlertDescription>{formSuccess}</AlertDescription>
-              </Alert>
-            )}
-
-            {formError && (
-              <Alert className="bg-red-900 border-red-800 text-red-100">
-                <AlertDescription>{formError}</AlertDescription>
-              </Alert>
-            )}
-
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -158,15 +186,14 @@ export function PatrimoniosSection({
                   name="nome"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-navy-200">Nome</FormLabel>
+                      <FormLabel>Nome</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Nome do patrimônio"
+                          placeholder="Ex: Apartamento Centro"
                           {...field}
-                          className="bg-navy-900 border-navy-700 text-white placeholder:text-navy-400"
                         />
                       </FormControl>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -175,101 +202,73 @@ export function PatrimoniosSection({
                   name="tipo"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-navy-200">Tipo</FormLabel>
+                      <FormLabel>Tipo</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className="bg-navy-900 border-navy-700 text-white">
+                          <SelectTrigger>
                             <SelectValue placeholder="Selecione o tipo" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className="bg-navy-800 border-navy-700 text-black bg-slate-200">
-                          <SelectItem
-                            value="Imóvel"
-                            className="focus:bg-navy-700"
-                          >
-                            Imóvel
-                          </SelectItem>
-                          <SelectItem
-                            value="Veículo"
-                            className="focus:bg-navy-700"
-                          >
-                            Veículo
-                          </SelectItem>
-                          <SelectItem
-                            value="Investimento"
-                            className="focus:bg-navy-700"
-                          >
+                        <SelectContent>
+                          <SelectItem value="Imóvel">Imóvel</SelectItem>
+                          <SelectItem value="Veículo">Veículo</SelectItem>
+                          <SelectItem value="Investimento">
                             Investimento
                           </SelectItem>
-                          <SelectItem
-                            value="Outro"
-                            className="focus:bg-navy-700"
-                          >
-                            Outro
-                          </SelectItem>
+                          <SelectItem value="Outro">Outro</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="data_aquisicao"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-navy-200">
-                        Data de Aquisição
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          {...field}
-                          className="bg-navy-900 border-navy-700 text-white"
-                        />
-                      </FormControl>
-                      <FormMessage className="text-red-400" />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="valor"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-navy-200">
-                        Valor (R$)
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          {...field}
-                          className="bg-navy-900 border-navy-700 text-white"
-                        />
-                      </FormControl>
-                      <FormMessage className="text-red-400" />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="data_aquisicao"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de Aquisição</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="valor"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Valor (R$)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="0,00"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                    className="bg-transparent border-navy-600 text-navy-300 hover:bg-navy-700 hover:text-white"
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="bg-navy-600 hover:bg-navy-700 text-white"
-                  >
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline">
+                      Cancelar
+                    </Button>
+                  </DialogClose>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     {isSubmitting ? "Salvando..." : "Salvar Patrimônio"}
                   </Button>
                 </DialogFooter>
@@ -279,86 +278,128 @@ export function PatrimoniosSection({
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-navy-800 border-navy-700 bg-slate-400">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-navy-200">
-              Total de Patrimônios
-            </CardTitle>
-            <Home className="h-4 w-4 text-navy-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">
-              {formatCurrency(totalValue.toString())}
-            </div>
-            <p className="text-xs text-navy-300">
-              {patrimonios.length} itens registrados
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Summary Card */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Valor Total dos Patrimônios
+          </CardTitle>
+          <Home className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-foreground">
+            {formatCurrency(totalValue.toString())}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {patrimonios.length} itens registrados
+          </p>
+        </CardContent>
+      </Card>
 
+      {/* Patrimonios List/Table by Type */}
       {Object.keys(groupedPatrimonios).length > 0 ? (
         <div className="space-y-6">
           {Object.entries(groupedPatrimonios).map(([tipo, items]) => (
-            <Card
-              key={tipo}
-              className="bg-navy-800 border-navy-700 bg-slate-400"
-            >
+            <Card key={tipo}>
               <CardHeader>
-                <CardTitle className="text-white">{tipo}</CardTitle>
-                <CardDescription className="text-navy-300">
+                <CardTitle className="text-lg font-semibold text-foreground">
+                  {tipo}
+                </CardTitle>
+                <CardDescription className="text-muted-foreground">
                   {items.length} {items.length === 1 ? "item" : "itens"}{" "}
-                  registrados
+                  registrados nesta categoria.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-navy-700">
-                        <th className="px-4 py-2 text-left font-medium text-navy-300">
-                          Nome
-                        </th>
-                        <th className="px-4 py-2 text-left font-medium text-navy-300">
-                          Data de Aquisição
-                        </th>
-                        <th className="px-4 py-2 text-left font-medium text-navy-300">
-                          Valor
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                <ScrollArea className="max-h-[400px] w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Data de Aquisição</TableHead>
+                        <TableHead className="text-right">Valor</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {items.map((patrimonio) => (
-                        <tr
-                          key={patrimonio.id}
-                          className="border-b border-navy-700"
-                        >
-                          <td className="px-4 py-2 text-white">
+                        <TableRow key={patrimonio.id}>
+                          <TableCell className="font-medium">
                             {patrimonio.nome}
-                          </td>
-                          <td className="px-4 py-2 text-white">
+                          </TableCell>
+                          <TableCell>
                             {formatDate(patrimonio.data_aquisicao)}
-                          </td>
-                          <td className="px-4 py-2 text-white">
+                          </TableCell>
+                          <TableCell className="text-right">
                             {formatCurrency(patrimonio.valor.toString())}
-                          </td>
-                        </tr>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Dialog
+                              open={
+                                isDeleteDialogOpen &&
+                                patrimonioToDelete?.id === patrimonio.id
+                              }
+                              onOpenChange={(open) => {
+                                setIsDeleteDialogOpen(open);
+                                if (!open) setPatrimonioToDelete(null);
+                              }}
+                            >
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="destructive"
+                                  size="icon"
+                                  onClick={() =>
+                                    setPatrimonioToDelete(patrimonio)
+                                  }
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Confirmar Exclusão</DialogTitle>
+                                  <DialogDescription>
+                                    Tem certeza que deseja excluir o patrimônio
+                                    "{patrimonio.nome}"? Esta ação não pode ser
+                                    desfeita.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <DialogFooter>
+                                  <DialogClose asChild>
+                                    <Button variant="outline">Cancelar</Button>
+                                  </DialogClose>
+                                  <Button
+                                    variant="destructive"
+                                    onClick={() => handleDelete(patrimonio.id)}
+                                    disabled={isSubmitting}
+                                  >
+                                    {isSubmitting && (
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    )}
+                                    {isSubmitting ? "Excluindo..." : "Excluir"}
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
               </CardContent>
             </Card>
           ))}
         </div>
       ) : (
-        <Card className="bg-navy-800 border-navy-700 bg-slate-400">
-          <CardContent className="flex flex-col items-center justify-center py-10">
-            <Home className="h-10 w-10 text-navy-500" />
-            <p className="mt-4 text-center text-navy-300">
-              Nenhum patrimônio cadastrado. Clique em "Adicionar Patrimônio"
-              para começar.
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <Home className="h-12 w-12 text-muted-foreground/50" />
+            <p className="mt-4 font-medium text-foreground">
+              Nenhum patrimônio cadastrado
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Clique em Adicionar Patrimônio para começar.
             </p>
           </CardContent>
         </Card>

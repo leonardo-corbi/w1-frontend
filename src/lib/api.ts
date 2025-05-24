@@ -18,7 +18,6 @@ const api = axios.create({
   },
 });
 
-// Interceptor para adicionar token de autenticação
 api.interceptors.request.use(
   (config) => {
     const token = Cookies.get("access_token");
@@ -27,99 +26,88 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Interceptor para tratamento de erros e refresh token
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
-
-    // Se o erro for 401 (não autorizado) e não for uma tentativa de refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-
       try {
-        // Tenta obter um novo token usando o refresh token
         const refreshToken = Cookies.get("refresh_token");
         if (!refreshToken) {
           throw new Error("Refresh token não encontrado");
         }
-
         const response = await axios.post(`${API_URL}/token/refresh/`, {
           refresh: refreshToken,
         });
-
-        // Salva o novo token
         const { access } = response.data;
         Cookies.set("access_token", access);
-
-        // Refaz a requisição original com o novo token
         originalRequest.headers.Authorization = `Bearer ${access}`;
         return api(originalRequest);
       } catch (refreshError) {
-        // Se falhar o refresh, limpa os tokens e redireciona para login
         Cookies.remove("access_token");
         Cookies.remove("refresh_token");
-
-        // Se estiver no navegador, redireciona para login
         if (typeof window !== "undefined") {
           window.location.href = "/login";
         }
-
         return Promise.reject(refreshError);
       }
     }
-
     return Promise.reject(error);
   }
 );
 
-// Interface para registro de usuário
-
-// Funções de autenticação
 export const authAPI = {
   login: async (email: string, password: string) => {
     const response = await api.post("/token/", { email, password });
     const { access, refresh } = response.data;
-
-    // Salva os tokens
     Cookies.set("access_token", access);
     Cookies.set("refresh_token", refresh);
-
     return response.data;
   },
-
   register: async (userData: Register) => {
     return api.post("/register/", userData);
   },
-
   logout: () => {
     Cookies.remove("access_token");
     Cookies.remove("refresh_token");
   },
-
   getProfile: async (): Promise<{ data: CustomUser }> => {
     return api.get("/me/");
   },
-
   updateProfile: async (profileData: Partial<CustomUser>) => {
     return api.put("/me/", profileData);
   },
-
   isAuthenticated: () => {
     return !!Cookies.get("access_token");
   },
 };
 
+export const userAPI = {
+  getAll: async (params: {
+    search?: string;
+    status?: string;
+    data_inicio?: string;
+    data_fim?: string;
+  }): Promise<{ data: CustomUser[] }> => {
+    return api.get("/users/", { params });
+  },
+  getUser: async (id: string): Promise<{ data: CustomUser }> => {
+    return api.get(`/users/${id}/`);
+  },
+  toggleStatus: async (id: string): Promise<{ data: CustomUser }> => {
+    return api.patch(`/users/${id}/toggle-status/`);
+  },
+};
+
 export const patrimonioAPI = {
-  getAll: async (): Promise<{ data: Patrimonio[] }> => {
-    return api.get("/patrimonio/");
+  getAll: async (
+    params: { user_id?: string } = {}
+  ): Promise<{ data: Patrimonio[] }> => {
+    return api.get("/patrimonio/", { params });
   },
   create: async (
     patrimonioData: Partial<Patrimonio>
@@ -138,8 +126,10 @@ export const patrimonioAPI = {
 };
 
 export const objetivoAPI = {
-  getAll: async (): Promise<{ data: Objetivo[] }> => {
-    return api.get("/objetivo/");
+  getAll: async (
+    params: { user_id?: string } = {}
+  ): Promise<{ data: Objetivo[] }> => {
+    return api.get("/objetivo/", { params });
   },
   create: async (
     objetivoData: Partial<Objetivo>
@@ -158,8 +148,10 @@ export const objetivoAPI = {
 };
 
 export const holdingAPI = {
-  getAll: async (): Promise<{ data: Holding[] }> => {
-    return api.get("/holding/");
+  getAll: async (
+    params: { user_id?: string } = {}
+  ): Promise<{ data: Holding[] }> => {
+    return api.get("/holding/", { params });
   },
   create: async (
     holdingData: Partial<Omit<Holding, "id" | "user_id" | "criado_em">>
@@ -175,8 +167,10 @@ export const holdingAPI = {
 };
 
 export const documentoAPI = {
-  getAll: async (): Promise<{ data: Documento[] }> => {
-    return api.get("/documento/");
+  getAll: async (
+    params: { user_id?: string } = {}
+  ): Promise<{ data: Documento[] }> => {
+    return api.get("/documento/", { params });
   },
   create: async (documentoData: {
     tipo_documento: string;
@@ -215,12 +209,29 @@ export const documentoAPI = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
+  updateStatus: async (
+    id: string,
+    status: Documento["status"]
+  ): Promise<{ data: Documento }> => {
+    return api.patch(
+      `/documento/${id}/`,
+      { status },
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  },
   delete: async (id: string): Promise<void> => {
     return api.delete(`/documento/${id}/delete/`);
   },
 };
+
 export const processoAPI = {
-  getAll: () => api.get<Processo[]>("/processo/"),
+  getAll: async (
+    params: { user_id?: string } = {}
+  ): Promise<{ data: Processo[] }> => {
+    return api.get("/processo/", { params });
+  },
   create: (data: Partial<Processo>) => api.post("/processo/", data),
   update: (id: string, data: Partial<Processo>) =>
     api.patch(`/processo/${id}/`, data),

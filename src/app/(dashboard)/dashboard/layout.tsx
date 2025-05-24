@@ -1,7 +1,9 @@
 import { Metadata } from "next";
 import MainContent from "@/components/dashboard/main-content";
 import { Navigation } from "@/components/dashboard/navigation";
+import { Toaster } from "@/components/ui/sonner";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
+import { cn } from "@/lib/utils";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
@@ -16,12 +18,11 @@ export default function DashboardLayout({
 }) {
   return (
     <AccessibilityProvider>
-      <div className="flex h-screen overflow-hidden bg-[#f8fafc]">
-        <aside className="relative">
-          <Navigation />
-        </aside>
+      <div className={cn("flex h-screen overflow-hidden bg-background")}>
+        <Navigation />
         <MainContent>{children}</MainContent>
       </div>
+      <Toaster richColors />
     </AccessibilityProvider>
   );
 }
