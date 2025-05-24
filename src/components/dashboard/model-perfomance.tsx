@@ -65,6 +65,19 @@ export default function ModelPerformance() {
     return <div>Carregando performance...</div>;
   }
 
+  const formatPercentage = (
+    value: number | undefined | null,
+    decimals: number = 1
+  ): string => {
+    return typeof value === "number" && !isNaN(value)
+      ? (value * 100).toFixed(decimals) + "%"
+      : "N/A";
+  };
+
+  const getProgressValue = (value: number | undefined | null): number => {
+    return typeof value === "number" && !isNaN(value) ? value * 100 : 0;
+  };
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="metrics" className="space-y-6">
@@ -88,10 +101,12 @@ export default function ModelPerformance() {
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Acurácia Geral</span>
                   <Badge variant="default">
-                    {(data.holdingReport.accuracy * 100).toFixed(1)}%
+                    {formatPercentage(data.holdingReport.accuracy)}
                   </Badge>
                 </div>
-                <Progress value={data.holdingReport.accuracy * 100} />
+                <Progress
+                  value={getProgressValue(data.holdingReport.accuracy)}
+                />
 
                 <div className="space-y-3">
                   <h4 className="font-semibold">Por Classe:</h4>
@@ -102,22 +117,19 @@ export default function ModelPerformance() {
                         <div className="flex justify-between text-xs">
                           <span>Precisão</span>
                           <span>
-                            {(data.holdingReport.precision.sim * 100).toFixed(
-                              1
-                            )}
-                            %
+                            {formatPercentage(data.holdingReport.precision.sim)}
                           </span>
                         </div>
                         <div className="flex justify-between text-xs">
                           <span>Recall</span>
                           <span>
-                            {(data.holdingReport.recall.sim * 100).toFixed(1)}%
+                            {formatPercentage(data.holdingReport.recall.sim)}
                           </span>
                         </div>
                         <div className="flex justify-between text-xs">
                           <span>F1-Score</span>
                           <span>
-                            {(data.holdingReport.f1Score.sim * 100).toFixed(1)}%
+                            {formatPercentage(data.holdingReport.f1Score.sim)}
                           </span>
                         </div>
                       </div>
@@ -128,22 +140,19 @@ export default function ModelPerformance() {
                         <div className="flex justify-between text-xs">
                           <span>Precisão</span>
                           <span>
-                            {(data.holdingReport.precision.nao * 100).toFixed(
-                              1
-                            )}
-                            %
+                            {formatPercentage(data.holdingReport.precision.nao)}
                           </span>
                         </div>
                         <div className="flex justify-between text-xs">
                           <span>Recall</span>
                           <span>
-                            {(data.holdingReport.recall.nao * 100).toFixed(1)}%
+                            {formatPercentage(data.holdingReport.recall.nao)}
                           </span>
                         </div>
                         <div className="flex justify-between text-xs">
                           <span>F1-Score</span>
                           <span>
-                            {(data.holdingReport.f1Score.nao * 100).toFixed(1)}%
+                            {formatPercentage(data.holdingReport.f1Score.nao)}
                           </span>
                         </div>
                       </div>
@@ -164,10 +173,10 @@ export default function ModelPerformance() {
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Acurácia Geral</span>
                   <Badge variant="default">
-                    {(data.churnReport.accuracy * 100).toFixed(1)}%
+                    {formatPercentage(data.churnReport.accuracy)}
                   </Badge>
                 </div>
-                <Progress value={data.churnReport.accuracy * 100} />
+                <Progress value={getProgressValue(data.churnReport.accuracy)} />
 
                 <div className="space-y-3">
                   <h4 className="font-semibold">Por Classe:</h4>
@@ -181,34 +190,34 @@ export default function ModelPerformance() {
                           <div className="flex justify-between text-xs">
                             <span>Prec.</span>
                             <span>
-                              {(
+                              {formatPercentage(
                                 data.churnReport.precision[
                                   risk as keyof typeof data.churnReport.precision
-                                ] * 100
-                              ).toFixed(0)}
-                              %
+                                ],
+                                0
+                              )}
                             </span>
                           </div>
                           <div className="flex justify-between text-xs">
                             <span>Rec.</span>
                             <span>
-                              {(
+                              {formatPercentage(
                                 data.churnReport.recall[
                                   risk as keyof typeof data.churnReport.recall
-                                ] * 100
-                              ).toFixed(0)}
-                              %
+                                ],
+                                0
+                              )}
                             </span>
                           </div>
                           <div className="flex justify-between text-xs">
                             <span>F1</span>
                             <span>
-                              {(
+                              {formatPercentage(
                                 data.churnReport.f1Score[
                                   risk as keyof typeof data.churnReport.f1Score
-                                ] * 100
-                              ).toFixed(0)}
-                              %
+                                ],
+                                0
+                              )}
                             </span>
                           </div>
                         </div>
@@ -239,19 +248,19 @@ export default function ModelPerformance() {
                 <div className="text-xs text-gray-600 mt-4">
                   <div className="flex justify-between">
                     <span>Verdadeiros Positivos:</span>
-                    <span>{data.holdingMatrix[1][1]}</span>
+                    <span>{data.holdingMatrix[1]?.[1] ?? "N/A"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Falsos Positivos:</span>
-                    <span>{data.holdingMatrix[0][1]}</span>
+                    <span>{data.holdingMatrix[0]?.[1] ?? "N/A"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Verdadeiros Negativos:</span>
-                    <span>{data.holdingMatrix[0][0]}</span>
+                    <span>{data.holdingMatrix[0]?.[0] ?? "N/A"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Falsos Negativos:</span>
-                    <span>{data.holdingMatrix[1][0]}</span>
+                    <span>{data.holdingMatrix[1]?.[0] ?? "N/A"}</span>
                   </div>
                 </div>
               </CardContent>
@@ -296,10 +305,13 @@ export default function ModelPerformance() {
                       {item.feature.replace("_", " ")}
                     </span>
                     <Badge variant="outline">
-                      {(item.importance * 100).toFixed(1)}%
+                      {formatPercentage(item.importance)}
                     </Badge>
                   </div>
-                  <Progress value={item.importance * 100} className="h-3" />
+                  <Progress
+                    value={getProgressValue(item.importance)}
+                    className="h-3"
+                  />
                 </div>
               ))}
               <div className="mt-6 p-4 bg-blue-50 rounded-lg">
@@ -309,19 +321,19 @@ export default function ModelPerformance() {
                 <ul className="text-sm text-blue-800 space-y-1">
                   <li>
                     • Volume de Investimentos é o fator mais determinante (
-                    {(data.featureImportance[0].importance * 100).toFixed(1)}%)
+                    {formatPercentage(data.featureImportance[0]?.importance)})
                   </li>
                   <li>
                     • Score de Relacionamento tem forte influência (
-                    {(data.featureImportance[1].importance * 100).toFixed(1)}%)
+                    {formatPercentage(data.featureImportance[1]?.importance)})
                   </li>
                   <li>
                     • Idade do cliente é moderadamente importante (
-                    {(data.featureImportance[2].importance * 100).toFixed(1)}%)
+                    {formatPercentage(data.featureImportance[2]?.importance)})
                   </li>
                   <li>
                     • Perfil de Risco tem menor impacto nas previsões (
-                    {(data.featureImportance[4].importance * 100).toFixed(1)}%)
+                    {formatPercentage(data.featureImportance[4]?.importance)})
                   </li>
                 </ul>
               </div>
@@ -342,55 +354,75 @@ export default function ModelPerformance() {
 
               precision    recall  f1-score   support
 
-         Não       ${data.holdingReport.precision.nao.toFixed(
+         Não       ${formatPercentage(
+           data.holdingReport.precision.nao,
            2
-         )}      ${data.holdingReport.recall.nao.toFixed(
+         )}      ${formatPercentage(
+                      data.holdingReport.recall.nao,
                       2
-                    )}      ${data.holdingReport.f1Score.nao.toFixed(2)}      ${
-                      data.holdingMatrix[0][0] + data.holdingMatrix[0][1]
+                    )}      ${formatPercentage(
+                      data.holdingReport.f1Score.nao,
+                      2
+                    )}      ${
+                      (data.holdingMatrix[0]?.[0] ?? 0) +
+                      (data.holdingMatrix[0]?.[1] ?? 0)
                     }
-         Sim       ${data.holdingReport.precision.sim.toFixed(
+         Sim       ${formatPercentage(
+           data.holdingReport.precision.sim,
            2
-         )}      ${data.holdingReport.recall.sim.toFixed(
+         )}      ${formatPercentage(
+                      data.holdingReport.recall.sim,
                       2
-                    )}      ${data.holdingReport.f1Score.sim.toFixed(2)}      ${
-                      data.holdingMatrix[1][0] + data.holdingMatrix[1][1]
+                    )}      ${formatPercentage(
+                      data.holdingReport.f1Score.sim,
+                      2
+                    )}      ${
+                      (data.holdingMatrix[1]?.[0] ?? 0) +
+                      (data.holdingMatrix[1]?.[1] ?? 0)
                     }
 
-    accuracy                           ${data.holdingReport.accuracy.toFixed(
+    accuracy                           ${formatPercentage(
+      data.holdingReport.accuracy,
       2
     )}      ${
-                      data.holdingMatrix[0][0] +
-                      data.holdingMatrix[0][1] +
-                      data.holdingMatrix[1][0] +
-                      data.holdingMatrix[1][1]
+                      (data.holdingMatrix[0]?.[0] ?? 0) +
+                      (data.holdingMatrix[0]?.[1] ?? 0) +
+                      (data.holdingMatrix[1]?.[0] ?? 0) +
+                      (data.holdingMatrix[1]?.[1] ?? 0)
                     }
-   macro avg       ${(
-     (data.holdingReport.precision.sim + data.holdingReport.precision.nao) /
+   macro avg       ${formatPercentage(
+     (data.holdingReport.precision.sim + data.holdingReport.precision.nao) / 2,
      2
-   ).toFixed(2)}      ${(
+   )}      ${formatPercentage(
                       (data.holdingReport.recall.sim +
                         data.holdingReport.recall.nao) /
+                        2,
                       2
-                    ).toFixed(2)}      ${(
+                    )}      ${formatPercentage(
                       (data.holdingReport.f1Score.sim +
                         data.holdingReport.f1Score.nao) /
+                        2,
                       2
-                    ).toFixed(2)}      ${
-                      data.holdingMatrix[0][0] +
-                      data.holdingMatrix[0][1] +
-                      data.holdingMatrix[1][0] +
-                      data.holdingMatrix[1][1]
+                    )}      ${
+                      (data.holdingMatrix[0]?.[0] ?? 0) +
+                      (data.holdingMatrix[0]?.[1] ?? 0) +
+                      (data.holdingMatrix[1]?.[0] ?? 0) +
+                      (data.holdingMatrix[1]?.[1] ?? 0)
                     }
-weighted avg       ${data.holdingReport.accuracy.toFixed(
+weighted avg       ${formatPercentage(
+                      data.holdingReport.accuracy,
                       2
-                    )}      ${data.holdingReport.accuracy.toFixed(
+                    )}      ${formatPercentage(
+                      data.holdingReport.accuracy,
                       2
-                    )}      ${data.holdingReport.accuracy.toFixed(2)}      ${
-                      data.holdingMatrix[0][0] +
-                      data.holdingMatrix[0][1] +
-                      data.holdingMatrix[1][0] +
-                      data.holdingMatrix[1][1]
+                    )}      ${formatPercentage(
+                      data.holdingReport.accuracy,
+                      2
+                    )}      ${
+                      (data.holdingMatrix[0]?.[0] ?? 0) +
+                      (data.holdingMatrix[0]?.[1] ?? 0) +
+                      (data.holdingMatrix[1]?.[0] ?? 0) +
+                      (data.holdingMatrix[1]?.[1] ?? 0)
                     }`}
                   </pre>
                 </div>
@@ -408,87 +440,111 @@ weighted avg       ${data.holdingReport.accuracy.toFixed(
 
               precision    recall  f1-score   support
 
-        Alto       ${data.churnReport.precision.alto.toFixed(
+        Alto       ${formatPercentage(
+          data.churnReport.precision.alto,
           2
-        )}      ${data.churnReport.recall.alto.toFixed(
+        )}      ${formatPercentage(
+                      data.churnReport.recall.alto,
                       2
-                    )}      ${data.churnReport.f1Score.alto.toFixed(2)}       ${
-                      data.churnMatrix[0][0] +
-                      data.churnMatrix[0][1] +
-                      data.churnMatrix[0][2]
+                    )}      ${formatPercentage(
+                      data.churnReport.f1Score.alto,
+                      2
+                    )}       ${
+                      (data.churnMatrix[0]?.[0] ?? 0) +
+                      (data.churnMatrix[0]?.[1] ?? 0) +
+                      (data.churnMatrix[0]?.[2] ?? 0)
                     }
-       Médio       ${data.churnReport.precision.medio.toFixed(
+       Médio       ${formatPercentage(
+         data.churnReport.precision.medio,
          2
-       )}      ${data.churnReport.recall.medio.toFixed(
+       )}      ${formatPercentage(
+                      data.churnReport.recall.medio,
                       2
-                    )}      ${data.churnReport.f1Score.medio.toFixed(2)}      ${
-                      data.churnMatrix[1][0] +
-                      data.churnMatrix[1][1] +
-                      data.churnMatrix[1][2]
+                    )}      ${formatPercentage(
+                      data.churnReport.f1Score.medio,
+                      2
+                    )}      ${
+                      (data.churnMatrix[1]?.[0] ?? 0) +
+                      (data.churnMatrix[1]?.[1] ?? 0) +
+                      (data.churnMatrix[1]?.[2] ?? 0)
                     }
-       Baixo       ${data.churnReport.precision.baixo.toFixed(
+       Baixo       ${formatPercentage(
+         data.churnReport.precision.baixo,
          2
-       )}      ${data.churnReport.recall.baixo.toFixed(
+       )}      ${formatPercentage(
+                      data.churnReport.recall.baixo,
                       2
-                    )}      ${data.churnReport.f1Score.baixo.toFixed(2)}      ${
-                      data.churnMatrix[2][0] +
-                      data.churnMatrix[2][1] +
-                      data.churnMatrix[2][2]
+                    )}      ${formatPercentage(
+                      data.churnReport.f1Score.baixo,
+                      2
+                    )}      ${
+                      (data.churnMatrix[2]?.[0] ?? 0) +
+                      (data.churnMatrix[2]?.[1] ?? 0) +
+                      (data.churnMatrix[2]?.[2] ?? 0)
                     }
 
-    accuracy                           ${data.churnReport.accuracy.toFixed(
+    accuracy                           ${formatPercentage(
+      data.churnReport.accuracy,
       2
     )}      ${
-                      data.churnMatrix[0][0] +
-                      data.churnMatrix[0][1] +
-                      data.churnMatrix[0][2] +
-                      data.churnMatrix[1][0] +
-                      data.churnMatrix[1][1] +
-                      data.churnMatrix[1][2] +
-                      data.churnMatrix[2][0] +
-                      data.churnMatrix[2][1] +
-                      data.churnMatrix[2][2]
+                      (data.churnMatrix[0]?.[0] ?? 0) +
+                      (data.churnMatrix[0]?.[1] ?? 0) +
+                      (data.churnMatrix[0]?.[2] ?? 0) +
+                      (data.churnMatrix[1]?.[0] ?? 0) +
+                      (data.churnMatrix[1]?.[1] ?? 0) +
+                      (data.churnMatrix[1]?.[2] ?? 0) +
+                      (data.churnMatrix[2]?.[0] ?? 0) +
+                      (data.churnMatrix[2]?.[1] ?? 0) +
+                      (data.churnMatrix[2]?.[2] ?? 0)
                     }
-   macro avg       ${(
+   macro avg       ${formatPercentage(
      (data.churnReport.precision.alto +
        data.churnReport.precision.medio +
        data.churnReport.precision.baixo) /
-     3
-   ).toFixed(2)}      ${(
+       3,
+     2
+   )}      ${formatPercentage(
                       (data.churnReport.recall.alto +
                         data.churnReport.recall.medio +
                         data.churnReport.recall.baixo) /
-                      3
-                    ).toFixed(2)}      ${(
+                        3,
+                      2
+                    )}      ${formatPercentage(
                       (data.churnReport.f1Score.alto +
                         data.churnReport.f1Score.medio +
                         data.churnReport.f1Score.baixo) /
-                      3
-                    ).toFixed(2)}      ${
-                      data.churnMatrix[0][0] +
-                      data.churnMatrix[0][1] +
-                      data.churnMatrix[0][2] +
-                      data.churnMatrix[1][0] +
-                      data.churnMatrix[1][1] +
-                      data.churnMatrix[1][2] +
-                      data.churnMatrix[2][0] +
-                      data.churnMatrix[2][1] +
-                      data.churnMatrix[2][2]
+                        3,
+                      2
+                    )}      ${
+                      (data.churnMatrix[0]?.[0] ?? 0) +
+                      (data.churnMatrix[0]?.[1] ?? 0) +
+                      (data.churnMatrix[0]?.[2] ?? 0) +
+                      (data.churnMatrix[1]?.[0] ?? 0) +
+                      (data.churnMatrix[1]?.[1] ?? 0) +
+                      (data.churnMatrix[1]?.[2] ?? 0) +
+                      (data.churnMatrix[2]?.[0] ?? 0) +
+                      (data.churnMatrix[2]?.[1] ?? 0) +
+                      (data.churnMatrix[2]?.[2] ?? 0)
                     }
-weighted avg       ${data.churnReport.accuracy.toFixed(
+weighted avg       ${formatPercentage(
+                      data.churnReport.accuracy,
                       2
-                    )}      ${data.churnReport.accuracy.toFixed(
+                    )}      ${formatPercentage(
+                      data.churnReport.accuracy,
                       2
-                    )}      ${data.churnReport.accuracy.toFixed(2)}      ${
-                      data.churnMatrix[0][0] +
-                      data.churnMatrix[0][1] +
-                      data.churnMatrix[0][2] +
-                      data.churnMatrix[1][0] +
-                      data.churnMatrix[1][1] +
-                      data.churnMatrix[1][2] +
-                      data.churnMatrix[2][0] +
-                      data.churnMatrix[2][1] +
-                      data.churnMatrix[2][2]
+                    )}      ${formatPercentage(
+                      data.churnReport.accuracy,
+                      2
+                    )}      ${
+                      (data.churnMatrix[0]?.[0] ?? 0) +
+                      (data.churnMatrix[0]?.[1] ?? 0) +
+                      (data.churnMatrix[0]?.[2] ?? 0) +
+                      (data.churnMatrix[1]?.[0] ?? 0) +
+                      (data.churnMatrix[1]?.[1] ?? 0) +
+                      (data.churnMatrix[1]?.[2] ?? 0) +
+                      (data.churnMatrix[2]?.[0] ?? 0) +
+                      (data.churnMatrix[2]?.[1] ?? 0) +
+                      (data.churnMatrix[2]?.[2] ?? 0)
                     }`}
                   </pre>
                 </div>
